@@ -52,6 +52,7 @@ class MongoDB implements AuthorizationCodeInterface,
             'jti_table' => 'oauth_jti',
             'scope_table'  => 'oauth_scopes',
             'key_table'  => 'oauth_keys',
+            'client_secret_field' => 'client_secret',
         ), $config);
     }
 
@@ -59,7 +60,7 @@ class MongoDB implements AuthorizationCodeInterface,
     public function checkClientCredentials($client_id, $client_secret = null)
     {
         if ($result = $this->collection('client_table')->findOne(array('client_id' => $client_id))) {
-            return $result['client_secret'] == $client_secret;
+            return $result[$this->config['client_secret_field']] == $client_secret;
         }
         return false;
     }
@@ -69,7 +70,7 @@ class MongoDB implements AuthorizationCodeInterface,
         if (!$result = $this->collection('client_table')->findOne(array('client_id' => $client_id))) {
             return false;
         }
-        return empty($result['client_secret']);
+        return empty($result[$this->config['client_secret_field']]);
     }
 
     /* ClientInterface */
@@ -85,7 +86,7 @@ class MongoDB implements AuthorizationCodeInterface,
             $result = $this->collection('client_table')->updateOne(
                 array('client_id' => $client_id),
                 array('$set' => array(
-                    'client_secret' => $client_secret,
+                    $this->config['client_secret_field'] => $client_secret,
                     'redirect_uri'  => $redirect_uri,
                     'grant_types'   => $grant_types,
                     'scope'         => $scope,
@@ -96,7 +97,7 @@ class MongoDB implements AuthorizationCodeInterface,
         }
         $client = array(
             'client_id'     => $client_id,
-            'client_secret' => $client_secret,
+            $this->config['client_secret_field'] => $client_secret,
             'redirect_uri'  => $redirect_uri,
             'grant_types'   => $grant_types,
             'scope'         => $scope,
